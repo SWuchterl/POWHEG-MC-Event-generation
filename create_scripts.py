@@ -38,23 +38,34 @@ def create_scripts (nbatches, processes, decay = False):
                 os.remove(filename)
             with open(filename, 'wb') as scriptfile:
                 scriptfile.write('#!/bin/bash\n\n')
-                scriptfile.writelines(['# set the CMSSW environment and load all needed modules\n', 
-                                       '#module use -a /afs/desy.de/group/cms/modulefiles/\n', 
-                                       'export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch\n', 
-                                       'source $VO_CMS_SW_DIR/cmsset_default.sh\n', 
-                                       'export CMSSW_GIT_REFERENCE=/nfs/dust/cms/user/'+subprocess.check_output(['bash','-c', 'echo ${USER}/.cmsgit-cache'])+'\n', 
+                #~ scriptfile.writelines(['# set the CMSSW environment and load all needed modules\n', 
+                                       #~ '#module use -a /afs/desy.de/group/cms/modulefiles/\n', 
+                                       #~ 'export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch\n', 
+                                       #~ 'source $VO_CMS_SW_DIR/cmsset_default.sh\n', 
+                                       #~ 'export CMSSW_GIT_REFERENCE=/nfs/dust/cms/user/'+subprocess.check_output(['bash','-c', 'echo ${USER}/.cmsgit-cache'])+'\n', 
+                                       #~ 'alias cd=\'cd -P\'\n', 
+                                       #~ 'myvarcwd=$PWD\n', 
+                                       #~ 'cd '+subprocess.check_output(['bash','-c', 'echo ${CMSSW_BASE}/src'])+'\n', 
+                                       #~ 'eval `scramv1 runtime -sh`\n', 
+                                       #~ 'cd ~\n', 
+                                       #~ 'echo "setup CMSSW_10_2_14 and stuff"\n', 
+                                       #~ 'cd $myvarcwd\n\n', 
+                                       #~ '#add the LHAPDF library path to PATH\n', 
+                                       #~ 'PATH=$PATH:/cvmfs/cms.cern.ch/slc6_amd64_gcc630/external/lhapdf/6.2.1-fmblme/bin/\n', 
+                                       #~ 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cvmfs/cms.cern.ch/slc6_amd64_gcc630/external/lhapdf/6.2.1-fmblme/bin/\n', 
+                                       #~ '#add the FASTJET library path to PATH\n', 
+                                       #~ 'PATH=$PATH:/cvmfs/cms.cern.ch/slc6_amd64_gcc630/external/fastjet/3.1.0/bin/\n', 
+                                       #~ 'echo "setup POWHEG"\n\n'])
+                scriptfile.writelines(['export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch\n', 
+                                       'source $VO_CMS_SW_DIR/cmsset_default.sh\n',
                                        'alias cd=\'cd -P\'\n', 
-                                       'myvarcwd=$PWD\n', 
-                                       'cd '+subprocess.check_output(['bash','-c', 'echo ${CMSSW_BASE}/src'])+'\n', 
-                                       'eval `scramv1 runtime -sh`\n', 
-                                       'cd ~\n', 
-                                       'echo "setup CMSSW_10_2_14 and stuff"\n', 
+                                       'myvarcwd=$PWD\n',
+                                       'cd /nfs/dust/cms/user/sewuchte/TTJET4/CMSSW_10_2_15/ \n'
+                                       'eval `scramv1 runtime -sh`\n' 
                                        'cd $myvarcwd\n\n', 
+                                       'source /nfs/dust/cms/user/sewuchte/TTJET4/HERWIG/bin/activate\n',
                                        '#add the LHAPDF library path to PATH\n', 
-                                       'PATH=$PATH:/cvmfs/cms.cern.ch/slc6_amd64_gcc630/external/lhapdf/6.2.1-fmblme/bin/\n', 
-                                       'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cvmfs/cms.cern.ch/slc6_amd64_gcc630/external/lhapdf/6.2.1-fmblme/bin/\n', 
-                                       '#add the FASTJET library path to PATH\n', 
-                                       'PATH=$PATH:/cvmfs/cms.cern.ch/slc6_amd64_gcc630/external/fastjet/3.1.0/bin/\n', 
+                                       'export PATH=$PATH:/nfs/dust/cms/user/sewuchte/TTJET4/FASTJET/bin/\n', 
                                        'echo "setup POWHEG"\n\n'])
                 
                 scriptfile.writelines(['# run POWHEG process ' + str(process_name) + ' batch number ' + str(batch) + '\n',
@@ -64,7 +75,8 @@ def create_scripts (nbatches, processes, decay = False):
                                             'echo "</LesHouchesEvents>" | gzip - | cat - >> pwgevents-' + str(batch).zfill(4) + '-decayed.lhe \n'])
                     
                 else:
-                    scriptfile.writelines(['echo ' + str(batch) + ' | ./pwhg_main' '\n'])
+                    #~ scriptfile.writelines(['echo ' + str(batch) + ' | ./pwhg_main-gnu' '\n'])
+                    scriptfile.writelines(['printf ' + str(batch) + ' | ./pwhg_main-gnu' '\n'])
 
                 scriptfile.write('cd ' + str(os.path.abspath(work_dir)))
                 
