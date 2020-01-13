@@ -21,14 +21,14 @@ class batchConfig_base(object):
         }
     }
     When a batchConfig object is initialized, the class checks whether 'hostkeyword' is part of the hostname.
-    If it is not specified, the default is used (currently HTCondor as used on DESY NAF). 
+    If it is not specified, the default is used (currently HTCondor as used on DESY NAF).
     You can add options for a host using the function 'addhost'.
 
     Current list of options that can be set:
     queue       --  queue that is to be used (on old lxplus batch)
     subname     --  name of the command used to submit jobs (e.g. 'qsub' for SGE, 'condor_submit' for HTCondor)
     arraysubmit --  boolean which indicates whether the submission of multiple jobs as array is supported or not
-    subopts     --  list of additional options for subitting jobs 
+    subopts     --  list of additional options for subitting jobs
                     (only do this if you want to reset the default submit options, else use 'addoption', 'setoption', 'removeoption')
     jobmode     --  name of system used to submit jobs (HTCondor -> 'HTC', DESY naf birds -> 'SGE', old lxplus batch -> "lxbatch")
     """
@@ -44,7 +44,7 @@ class batchConfig_base(object):
     subopts_.append("notification = Never")
     subopts_.append("priority = 0")
     subopts_.append("run_as_owner = true")
-    subopts_.append("max_retries = 3")
+    subopts_.append("max_retries = 20")
     subopts_.append("retry_until = ExitCode == 0")
     # subopts_.append("RequestMemory = 2500")
     # subopts_.append("+RequestRuntime = 86400")
@@ -140,7 +140,7 @@ class batchConfig_base(object):
     def get_index_for_attribute(self, attribute):
         """
         Check if there is a line in 'subopts_' that starts with 'attribute'.
-        Return index if possible, otherwise None 
+        Return index if possible, otherwise None
         """
         index = None
 
@@ -265,12 +265,12 @@ class batchConfig_base(object):
         hold: boolean, if True initates the sript in hold mode, can be released manually or inbuild submitXXXtoBatch functions
         isArray: set True if script is an array script
         nscripts: number of scripts in the array script. Only needed if isArray=True
-        
+
         returns path to generated condor_submit file
         '''
         submitPath = script.replace(".sh",".sub")
         submitScript = ".".join(os.path.basename(script).split(".")[:-1])
-        
+
         submitCode = ""
         if len(self.subopts_) != 0:
             submitCode = "\n".join(self.subopts_)
@@ -342,7 +342,7 @@ class batchConfig_base(object):
         command = [self.subname_, '-terse','-o', '/dev/null', '-e', '/dev/null']
         command += self.subopts_
         return command
-    
+
     def setupRelease(self, oldJIDs, newJID):
         filepath = os.path.abspath(os.path.realpath(__file__))
         basedir = os.path.dirname(filepath)
@@ -357,7 +357,7 @@ class batchConfig_base(object):
         releaseCode += "q = " + module + "()\n"
         releaseCode += "q.do_qstat("+str(oldJIDs)+")\n"
         releaseCode += "os.system('condor_release "+str(newJID)+"')"
-        
+
         releasePath = "release_"+str(newJID)+".py"
         print(releasePath)
         with open(releasePath, "w") as releaseFile:
@@ -387,35 +387,35 @@ class batchConfig_base(object):
         # os.makedirs(logdir)
         if not os.path.exists(logdir):
             os.makedirs(logdir)
-        
+
         # write array script
         nscripts=len(scripts)
         tasknumberstring='1-'+str(nscripts)
 
         arrayscriptpath = self.writeArrayCode(scripts, arrayscriptpath)
-        
+
         # prepate submit
         if "HTC" in self.jobmode_:
             print 'writing code for condor_submit-script'
             hold = True if jobid else False
             submitPath = self.writeSubmitCode(arrayscriptpath, logdir, hold = hold, isArray = True, nscripts = nscripts)
-            
+
             print 'submitting',submitPath
             command = self.subname_ + " -terse " + submitPath
             command = command.split()
         else:
             print 'submitting',arrayscriptpath
             command = self.construct_array_submit()
-            if not command:            
+            if not command:
                 print "could not generate array submit command"
-                return 
+                return
             command.append('-t')
             command.append(tasknumberstring)
             if jobid:
                 command.append("-hold_jid")
                 command.append(str(jobid))
             command.append(arrayscriptpath)
-        
+
         # submitting
         print "command:", command
         a = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.STDOUT,stdin=subprocess.PIPE)
@@ -423,7 +423,7 @@ class batchConfig_base(object):
         jobidstring = output
         if len(jobidstring)<2:
             sys.exit("something did not work with submitting the array job")
-        
+
         # extracting jobid
         try:
             jobidint = int(output.split(".")[0])
@@ -434,7 +434,7 @@ class batchConfig_base(object):
         if hold:
             self.setupRelease(jobid, jobidint)
         return [jobidint]
-    
+
     def submitJobToBatch(self, script, jobid = None):
         '''
         submits a single job to batch system
@@ -487,7 +487,7 @@ class batchConfig_base(object):
         if hold:
             self.setupRelease(jobid, jobidint)
         return jobids
-        
+
     def do_qstat(self, jobids):
         '''
         monitoring of job status
@@ -524,9 +524,8 @@ class batchConfig_base(object):
                             if jobid in jobids:
                                 nrunning+=1
                                 break
-    
+
             if nrunning>0:
                 print nrunning,'jobs running'
             else:
                 allfinished=True
-    
